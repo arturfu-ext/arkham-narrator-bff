@@ -43,11 +43,6 @@ async function createFileFromBuffer(
 }
 
 const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  // Initialize OpenAI client using Fastify's config
-  const openai = new OpenAI({
-    apiKey: fastify.config.OPENAI_API_KEY,
-  });
-
   // Register multipart support
   await fastify.register(import("@fastify/multipart"), {
     limits: {
@@ -91,16 +86,16 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         // Upload file to OpenAI Files API
         const fileBuffer = await data.toBuffer();
         const fileId = await createFileFromBuffer(
-          openai,
+          fastify.openai,
           fileBuffer,
           data.filename,
           data.mimetype,
         );
 
-        fastify.log.info("File uploaded to OpenAI:", fileId);
+        fastify.log.info({ fileId }, "File uploaded to OpenAI");
 
-        const response = await openai.responses.create({
-          model: "gpt-4.1-mini",
+        const response = await fastify.openai.responses.create({
+          model: "gpt-4.1",
           instructions: MODEL_INSTRUCTIONS,
           input: [
             {
@@ -131,8 +126,7 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  // Health check endpoint
-  fastify.get("/health", async function (request, reply) {
+  fastify.get("/health", async function () {
     return { status: "ok", service: "ocr" };
   });
 };
