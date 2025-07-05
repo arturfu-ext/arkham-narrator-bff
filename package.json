@@ -20,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
+    "@fastify/env": "^5.0.2",
     "@fastify/multipart": "^9.0.3",
     "@fastify/sensible": "^6.0.0",
     "dotenv": "^17.0.1",
@@ -29,10 +30,12 @@
     "openai": "^5.8.2"
   },
   "devDependencies": {
-    "@types/node": "^22.1.0",
+    "@fastify/type-provider-typebox": "^5.1.0",
+    "@types/node": "^22.16.0",
     "c8": "^10.1.2",
     "concurrently": "^9.0.0",
     "fastify-tsconfig": "^3.0.0",
+    "prettier": "^3.6.2",
     "ts-node": "^10.4.0",
     "typescript": "~5.8.2"
   }
