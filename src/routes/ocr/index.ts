@@ -1,5 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
 import OpenAI from "openai";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
@@ -18,6 +20,11 @@ const RESPONSE_SCHEMA = {
     error: { type: "string" },
   },
 };
+
+const MODEL_INSTRUCTIONS = readFileSync(
+  join(process.cwd(), "src/routes/ocr/model-instructions.txt"),
+  "utf-8",
+);
 
 async function createFileFromBuffer(
   openai: OpenAI,
@@ -47,6 +54,8 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       fileSize: FILE_SIZE_LIMIT,
     },
   });
+
+  console.log(process.cwd());
 
   fastify.post(
     "/",
@@ -92,11 +101,11 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
         const response = await openai.responses.create({
           model: "gpt-4.1-mini",
+          instructions: MODEL_INSTRUCTIONS,
           input: [
             {
               role: "user",
               content: [
-                { type: "input_text", text: "what's in this image?" },
                 {
                   type: "input_image",
                   file_id: fileId,
@@ -112,8 +121,7 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           text: response.output_text,
         });
       } catch (error) {
-        console.log(error);
-        fastify.log.error("OCR processing error:", error);
+        fastify.log.error(error, "OCR processing error");
 
         return reply.code(500).send({
           success: false,
