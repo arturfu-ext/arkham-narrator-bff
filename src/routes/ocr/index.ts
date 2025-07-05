@@ -1,7 +1,40 @@
 import { FastifyPluginAsync } from "fastify";
 import OpenAI from "openai";
 
-// Initialize OpenAI client
+const ALLOWED_FILE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+
+const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB
+
+const RESPONSE_SCHEMA = {
+  type: "object",
+  properties: {
+    success: { type: "boolean" },
+    text: { type: "string" },
+    error: { type: "string" },
+  },
+};
+
+async function createFileFromBuffer(
+  openai: OpenAI,
+  buffer: Buffer,
+  filename: string,
+  mimetype: string,
+): Promise<string> {
+  const file = new File([buffer], filename, { type: mimetype });
+
+  const result = await openai.files.create({
+    file,
+    purpose: "vision",
+  });
+
+  return result.id;
+}
+
 const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   // Initialize OpenAI client using Fastify's config
   const openai = new OpenAI({
@@ -11,28 +44,18 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   // Register multipart support
   await fastify.register(import("@fastify/multipart"), {
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB limit
+      fileSize: FILE_SIZE_LIMIT,
     },
   });
-
-  // Schema for the response
-  const ocrResponseSchema = {
-    type: "object",
-    properties: {
-      success: { type: "boolean" },
-      text: { type: "string" },
-      error: { type: "string" },
-    },
-  };
 
   fastify.post(
     "/",
     {
       schema: {
         response: {
-          200: ocrResponseSchema,
-          400: ocrResponseSchema,
-          500: ocrResponseSchema,
+          200: RESPONSE_SCHEMA,
+          400: RESPONSE_SCHEMA,
+          500: RESPONSE_SCHEMA,
         },
       },
     },
@@ -48,14 +71,7 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           });
         }
 
-        // Validate file type
-        const allowedTypes = [
-          "image/jpeg",
-          "image/png",
-          "image/gif",
-          "image/webp",
-        ];
-        if (!allowedTypes.includes(data.mimetype)) {
+        if (!ALLOWED_FILE_TYPES.includes(data.mimetype)) {
           return reply.code(400).send({
             success: false,
             error:
@@ -63,41 +79,40 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           });
         }
 
-        // Convert file buffer to base64
-        const buffer = await data.toBuffer();
-        const base64Image = buffer.toString("base64");
-        const dataUrl = `data:${data.mimetype};base64,${base64Image}`;
+        // Upload file to OpenAI Files API
+        const fileBuffer = await data.toBuffer();
+        const fileId = await createFileFromBuffer(
+          openai,
+          fileBuffer,
+          data.filename,
+          data.mimetype,
+        );
 
-        // Call OpenAI Vision API
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o-mini", // Using gpt-4o-mini as it's cost-effective for OCR tasks
-          messages: [
+        fastify.log.info("File uploaded to OpenAI:", fileId);
+
+        const response = await openai.responses.create({
+          model: "gpt-4.1-mini",
+          input: [
             {
               role: "user",
               content: [
+                { type: "input_text", text: "what's in this image?" },
                 {
-                  type: "text",
-                  text: "Please extract all text from this image. Return only the extracted text, without any additional commentary or formatting.",
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: dataUrl,
-                    detail: "high",
-                  },
+                  type: "input_image",
+                  file_id: fileId,
+                  detail: "auto",
                 },
               ],
             },
           ],
         });
 
-        const extractedText = response.choices[0]?.message?.content || "";
-
         return reply.send({
           success: true,
-          text: extractedText,
+          text: response.output_text,
         });
       } catch (error) {
+        console.log(error);
         fastify.log.error("OCR processing error:", error);
 
         return reply.code(500).send({
