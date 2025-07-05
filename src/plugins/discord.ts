@@ -1,9 +1,10 @@
 import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { ChannelType, Client, Events, GatewayIntentBits } from "discord.js";
 import {
   createAudioPlayer,
   createAudioResource,
+  getVoiceConnection,
   joinVoiceChannel,
   NoSubscriberBehavior,
 } from "@discordjs/voice";
@@ -68,10 +69,22 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
   };
 
   const disconnect = async () => {
-    await discordClient.destroy();
+    const channel = await discordClient.channels.fetch(TABLETOP_CHANNEL_ID);
+    if (channel.type === ChannelType.GuildVoice) {
+      const connection = getVoiceConnection(channel.guild.id);
+      connection.destroy();
+    }
   };
 
   const play = async (readable: Readable) => {
+    const channel = await discordClient.channels.fetch(TABLETOP_CHANNEL_ID);
+    if (channel.type === ChannelType.GuildVoice) {
+      const connection = getVoiceConnection(channel.guild.id);
+      if (!connection) {
+        await connect();
+      }
+    }
+
     const resource = createAudioResource(readable);
     audioPlayer.play(resource);
   };

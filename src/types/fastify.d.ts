@@ -1,6 +1,6 @@
 import "fastify";
-import type { ElevenLabs } from "@elevenlabs/elevenlabs-js";
 import type OpenAI from "openai";
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 // Extend Fastify types to include our environment configuration
 declare module "fastify" {
@@ -14,6 +14,12 @@ declare module "fastify" {
       HOST: string;
     };
     openai: OpenAI;
-    elevenlabs: ElevenLabs;
+    elevenlabs: ElevenLabsClient;
+    discord: {
+      connect: () => Promise<void>;
+      disconnect: () => Promise<void>;
+      play: (readable: Readable) => Promise<void>;
+      stop: () => void;
+    };
   }
 }
