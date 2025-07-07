@@ -18,6 +18,8 @@ declare module "fastify" {
     discord: {
       connect: () => Promise<void>;
       disconnect: () => Promise<void>;
+      pause: () => Promise<void>;
+      unpause: () => Promise<void>;
       play: (readable: Readable) => Promise<void>;
       stop: () => void;
     };
