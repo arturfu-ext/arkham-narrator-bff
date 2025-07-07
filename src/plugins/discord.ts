@@ -82,6 +82,7 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
       const connection = getVoiceConnection(channel.guild.id);
       if (!connection) {
         await connect();
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }
 

@@ -1,6 +1,31 @@
 import { FastifyPluginAsync } from "fastify";
+import type { VoiceSettings } from "@elevenlabs/elevenlabs-js/api/index.js";
 
-const VOICE_ID_BRUNO_SIAK = "JxVKcxm9wtnCYEs8V00p";
+const VOICE_LOOKUP: Record<
+  string,
+  { modelId: string; settings: VoiceSettings }
+> = {
+  "tomasz-zborek": {
+    modelId: "g8ZOdhoD9R6eYKPTjKbE",
+    settings: {
+      speed: 1.1,
+      stability: 0.4,
+      similarityBoost: 0.6,
+      style: 0.4,
+      useSpeakerBoost: true,
+    },
+  },
+  epic: {
+    modelId: "FF7KdobWPaiR0vkcALHF",
+    settings: {
+      speed: 1.1,
+      stability: 0.4,
+      similarityBoost: 0.6,
+      style: 0.4,
+      useSpeakerBoost: true,
+    },
+  },
+};
 
 const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.post(
@@ -19,14 +44,14 @@ const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       const { text } = request.body as { text: string };
 
-      // Use the ElevenLabs client from the plugin
-      // Add your TTS logic here
+      const voice = VOICE_LOOKUP["tomasz-zborek"];
 
       const audioStream = await fastify.elevenlabs.textToSpeech.stream(
-        VOICE_ID_BRUNO_SIAK,
+        voice.modelId,
         {
           text,
           modelId: "eleven_multilingual_v2",
+          voiceSettings: voice.settings,
         },
       );
 
