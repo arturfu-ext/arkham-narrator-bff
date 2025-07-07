@@ -1,10 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
 import type { VoiceSettings } from "@elevenlabs/elevenlabs-js/api/index.js";
 
-const VOICE_LOOKUP: Record<
-  string,
-  { modelId: string; settings: VoiceSettings }
-> = {
+const VOICE_LOOKUP: Record<string, { modelId: string; settings: VoiceSettings }> = {
   "tomasz-zborek": {
     modelId: "g8ZOdhoD9R6eYKPTjKbE",
     settings: {
@@ -18,7 +15,7 @@ const VOICE_LOOKUP: Record<
   epic: {
     modelId: "FF7KdobWPaiR0vkcALHF",
     settings: {
-      speed: 1.1,
+      speed: 1.15,
       stability: 0.4,
       similarityBoost: 0.6,
       style: 0.4,
@@ -46,14 +43,11 @@ const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
       const voice = VOICE_LOOKUP["tomasz-zborek"];
 
-      const audioStream = await fastify.elevenlabs.textToSpeech.stream(
-        voice.modelId,
-        {
-          text,
-          modelId: "eleven_multilingual_v2",
-          voiceSettings: voice.settings,
-        },
-      );
+      const audioStream = await fastify.elevenlabs.textToSpeech.stream(voice.modelId, {
+        text,
+        modelId: "eleven_multilingual_v2",
+        voiceSettings: voice.settings,
+      });
 
       await fastify.discord.play(audioStream);
 

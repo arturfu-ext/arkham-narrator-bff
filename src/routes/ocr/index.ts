@@ -86,9 +86,6 @@ const ocr: FastifyPluginAsync = async (fastify): Promise<void> => {
 
         // Start all uploads simultaneously
         const fileObjectPromises = files.map((file) => uploadFileToOpenAi(file));
-
-        console.log("halko"); // This will now print
-
         const fileObjects = await Promise.all(fileObjectPromises);
 
         const ocrResponse = await fastify.openai.responses.create({
