@@ -91,15 +91,15 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
   };
 
   const stop = () => {
-    audioPlayer.stop();
+    return audioPlayer.stop();
   };
 
   const pause = () => {
-    audioPlayer.pause();
+    return audioPlayer.pause();
   };
 
   const unpause = () => {
-    audioPlayer.unpause();
+    return audioPlayer.unpause();
   };
 
   const discord = { connect, disconnect, play, stop, pause, unpause };

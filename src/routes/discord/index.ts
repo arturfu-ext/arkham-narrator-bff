@@ -10,15 +10,6 @@ const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   });
 
-  fastify.addSchema({
-    $id: "response-schema",
-    type: "object",
-    properties: {
-      status: { type: "string" },
-      message: { type: "string" },
-    },
-  });
-
   fastify.get(
     "/connect",
     {
