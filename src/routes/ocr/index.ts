@@ -169,6 +169,8 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           });
         }
 
+        fastify.log.info({ ocrText: ocrResponse.output_text }, "OCR finished");
+
         const translateResponse = await fastify.openai.responses.create({
           model: "gpt-4.1",
           instructions: V2_TRANSLATE_INSTRUCTIONS,
@@ -184,6 +186,11 @@ const ocr: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
             },
           ],
         });
+
+        fastify.log.info(
+          { translatedText: translateResponse.output_text },
+          "Translate finished",
+        );
 
         return reply.send({
           success: true,
