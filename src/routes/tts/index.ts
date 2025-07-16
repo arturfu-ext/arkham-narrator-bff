@@ -7,8 +7,8 @@ const VOICE_LOOKUP: Record<string, { modelId: string; settings: VoiceSettings }>
     settings: {
       speed: 1.1,
       stability: 0.4,
-      similarityBoost: 0.6,
-      style: 0.4,
+      similarityBoost: 0.5,
+      style: 0.5,
       useSpeakerBoost: true,
     },
   },

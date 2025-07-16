@@ -10,7 +10,7 @@ const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   });
 
-  fastify.get(
+  fastify.post(
     "/connect",
     {
       schema: {
@@ -25,7 +25,7 @@ const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  fastify.get(
+  fastify.post(
     "/disconnect",
     {
       schema: {
@@ -83,17 +83,17 @@ const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  fastify.get("/pause", async function () {
+  fastify.post("/pause", async function () {
     fastify.discord.pause();
     return { status: "OK", message: "Audio paused" };
   });
 
-  fastify.get("/unpause", async function () {
+  fastify.post("/unpause", async function () {
     fastify.discord.unpause();
     return { status: "OK", message: "Audio unpaused" };
   });
 
-  fastify.get("/stop", async function () {
+  fastify.post("/stop", async function () {
     fastify.discord.stop();
     return { status: "OK", message: "Audio stopped" };
   });

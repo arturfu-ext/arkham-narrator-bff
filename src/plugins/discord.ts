@@ -7,6 +7,7 @@ import {
   getVoiceConnection,
   joinVoiceChannel,
   NoSubscriberBehavior,
+  VoiceConnectionStatus,
 } from "@discordjs/voice";
 import { Readable } from "node:stream";
 
@@ -24,12 +25,20 @@ const audioPlayer = createAudioPlayer({
 
 const TABLETOP_CHANNEL_ID = "1291440448761757838";
 
+const getTabletopChannel = async () => await discordClient.channels.fetch(TABLETOP_CHANNEL_ID);
+
+const getTabletopChannelConnection = async () => {
+  const channel = await getTabletopChannel();
+  if (channel.type === ChannelType.GuildVoice) {
+    return getVoiceConnection(channel.guild.id);
+  }
+};
+
 const discordPlugin: FastifyPluginAsync = async (fastify) => {
+  let connectionStatus: VoiceConnectionStatus = VoiceConnectionStatus.Disconnected;
+
   discordClient.once(Events.ClientReady, async (readyClient) => {
-    fastify.log.info(
-      { userTag: readyClient.user.tag },
-      "Discord client initialized.",
-    );
+    fastify.log.info({ userTag: readyClient.user.tag }, "Discord client initialized.");
   });
 
   discordClient.on("error", (err) => {
@@ -42,9 +51,7 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
     fastify.log.info("Attempting to connect to voice channel.");
 
     if (discordClient) {
-      const channel = await discordClient.channels.fetch(TABLETOP_CHANNEL_ID);
-
-      console.log("here");
+      const channel = await getTabletopChannel();
       if (channel && channel.isVoiceBased() && channel.joinable) {
         try {
           const connection = joinVoiceChannel({
@@ -69,21 +76,17 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
   };
 
   const disconnect = async () => {
-    const channel = await discordClient.channels.fetch(TABLETOP_CHANNEL_ID);
-    if (channel.type === ChannelType.GuildVoice) {
-      const connection = getVoiceConnection(channel.guild.id);
-      connection.destroy();
-    }
+    const connection = await getTabletopChannelConnection();
+    connection?.destroy();
   };
 
   const play = async (readable: Readable) => {
-    const channel = await discordClient.channels.fetch(TABLETOP_CHANNEL_ID);
-    if (channel.type === ChannelType.GuildVoice) {
-      const connection = getVoiceConnection(channel.guild.id);
-      if (!connection) {
-        await connect();
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
+    const connection = getTabletopChannelConnection();
+
+    if (!connection) {
+      await connect();
+      // wait a bit before playing to avoid audio beginning cut-off
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     const resource = createAudioResource(readable);
@@ -102,8 +105,12 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
     return audioPlayer.unpause();
   };
 
-  const discord = { connect, disconnect, play, stop, pause, unpause };
+  const isConnected = async () => {
+    const connection = await getChannelConnection();
+    // connection.
+  };
 
+  const discord = { connect, disconnect, play, stop, pause, unpause };
   fastify.decorate("discord", discord);
 };
 
