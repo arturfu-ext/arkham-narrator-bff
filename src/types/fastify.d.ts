@@ -1,6 +1,7 @@
 import "fastify";
 import type OpenAI from "openai";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { VoiceConnectionStatus } from "@discordjs/voice";
 
 // Extend Fastify types to include our environment configuration
 declare module "fastify" {
@@ -22,6 +23,7 @@ declare module "fastify" {
       stop: () => boolean;
       pause: () => boolean;
       unpause: () => boolean;
+      getConnectionStatus: () => Promise<VoiceConnectionStatus>;
     };
   }
 }

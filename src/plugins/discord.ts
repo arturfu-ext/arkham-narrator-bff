@@ -7,7 +7,6 @@ import {
   getVoiceConnection,
   joinVoiceChannel,
   NoSubscriberBehavior,
-  VoiceConnectionStatus,
 } from "@discordjs/voice";
 import { Readable } from "node:stream";
 
@@ -18,7 +17,6 @@ const discordClient = new Client({
 const audioPlayer = createAudioPlayer({
   behaviors: {
     noSubscriber: NoSubscriberBehavior.Play,
-    // Set max missed frames to 60 seconds (20ms per frame)
     maxMissedFrames: 3000,
   },
 });
@@ -35,8 +33,6 @@ const getTabletopChannelConnection = async () => {
 };
 
 const discordPlugin: FastifyPluginAsync = async (fastify) => {
-  let connectionStatus: VoiceConnectionStatus = VoiceConnectionStatus.Disconnected;
-
   discordClient.once(Events.ClientReady, async (readyClient) => {
     fastify.log.info({ userTag: readyClient.user.tag }, "Discord client initialized.");
   });
@@ -81,11 +77,10 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
   };
 
   const play = async (readable: Readable) => {
-    const connection = getTabletopChannelConnection();
+    const connection = await getTabletopChannelConnection();
 
     if (!connection) {
       await connect();
-      // wait a bit before playing to avoid audio beginning cut-off
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
@@ -105,16 +100,16 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
     return audioPlayer.unpause();
   };
 
-  const isConnected = async () => {
-    const connection = await getChannelConnection();
-    // connection.
+  const getConnectionStatus = async () => {
+    const connection = await getTabletopChannelConnection();
+    return connection?.state?.status;
   };
 
-  const discord = { connect, disconnect, play, stop, pause, unpause };
+  const discord = { connect, disconnect, play, stop, pause, unpause, getConnectionStatus };
   fastify.decorate("discord", discord);
 };
 
 export default fp(discordPlugin, {
   name: "discord",
-  dependencies: ["env"], // Ensure env plugin loads first
+  dependencies: ["env"],
 });

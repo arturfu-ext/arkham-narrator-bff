@@ -97,6 +97,13 @@ const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.discord.stop();
     return { status: "OK", message: "Audio stopped" };
   });
+
+  fastify.get("/status", async function () {
+    const status = await fastify.discord.getConnectionStatus();
+    return {
+      status,
+    };
+  });
 };
 
 export default discord;
