@@ -1,30 +1,26 @@
-import { FastifyPluginAsync } from "fastify";
 import type { VoiceSettings } from "@elevenlabs/elevenlabs-js/api/index.js";
+import { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
 
-const VOICE_LOOKUP: Record<string, { modelId: string; settings: VoiceSettings }> = {
-  "tomasz-zborek": {
-    modelId: "g8ZOdhoD9R6eYKPTjKbE",
-    settings: {
-      speed: 1.1,
-      stability: 0.4,
-      similarityBoost: 0.5,
-      style: 0.5,
-      useSpeakerBoost: true,
-    },
+const SUPPORTED_VOICES = [
+  { name: "Tomasz Zborek", id: "g8ZOdhoD9R6eYKPTjKbE" },
+  {
+    name: "Epic Trailer Voice",
+    id: "FF7KdobWPaiR0vkcALHF",
   },
-  epic: {
-    modelId: "FF7KdobWPaiR0vkcALHF",
-    settings: {
-      speed: 1.15,
-      stability: 0.4,
-      similarityBoost: 0.6,
-      style: 0.4,
-      useSpeakerBoost: true,
-    },
-  },
+  { name: "Alex - Narrator", id: "H5xTcsAIeS5RAykjz57a" },
+] as const;
+
+const DEFAULT_VOICE = SUPPORTED_VOICES[0];
+
+const DEFAULT_SETTINGS: VoiceSettings = {
+  speed: 1,
+  stability: 0.5,
+  similarityBoost: 0.75,
+  style: 0,
+  useSpeakerBoost: true,
 };
 
-const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
+const tts: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> => {
   fastify.post(
     "/play",
     {
@@ -34,19 +30,32 @@ const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           required: ["text"],
           properties: {
             text: { type: "string" },
+            voiceId: {
+              type: "string",
+              enum: SUPPORTED_VOICES.map((v) => v.id),
+              default: DEFAULT_VOICE.id,
+            },
+            voiceSettings: {
+              type: "object",
+              properties: {
+                speed: { type: "number", default: DEFAULT_SETTINGS.speed },
+                stability: { type: "number", default: DEFAULT_SETTINGS.stability },
+                similarityBoost: { type: "number", default: DEFAULT_SETTINGS.similarityBoost },
+                style: { type: "number", default: DEFAULT_SETTINGS.style },
+                useSpeakerBoost: { type: "boolean", default: DEFAULT_SETTINGS.useSpeakerBoost },
+              },
+            },
           },
-        },
+        } as const,
       },
     },
-    async (request, reply) => {
-      const { text } = request.body as { text: string };
+    async (request) => {
+      const { text, voiceId, voiceSettings } = request.body;
 
-      const voice = VOICE_LOOKUP["tomasz-zborek"];
-
-      const audioStream = await fastify.elevenlabs.textToSpeech.stream(voice.modelId, {
+      const audioStream = await fastify.elevenlabs.textToSpeech.stream(voiceId, {
         text,
         modelId: "eleven_multilingual_v2",
-        voiceSettings: voice.settings,
+        voiceSettings,
       });
 
       await fastify.discord.play(audioStream);
@@ -56,4 +65,4 @@ const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   );
 };
 
-export default elevenlabs;
+export default tts;
