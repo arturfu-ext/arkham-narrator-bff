@@ -1,7 +1,17 @@
 import { FastifyPluginAsync } from "fastify";
+import { VoiceConnectionStatus } from "@discordjs/voice";
+import { ConnectionStatusDto } from "../../models/dto.js";
 
 const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = ["audio/mpeg", "audio/wav", "audio/ogg"];
+
+const CONNECTION_STATUS_MAP: Record<VoiceConnectionStatus, ConnectionStatusDto> = {
+  [VoiceConnectionStatus.Ready]: ConnectionStatusDto.Connected,
+  [VoiceConnectionStatus.Signalling]: ConnectionStatusDto.Connecting,
+  [VoiceConnectionStatus.Connecting]: ConnectionStatusDto.Connecting,
+  [VoiceConnectionStatus.Destroyed]: ConnectionStatusDto.Disconnected,
+  [VoiceConnectionStatus.Disconnected]: ConnectionStatusDto.Disconnected,
+};
 
 const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   await fastify.register(import("@fastify/multipart"), {
@@ -101,7 +111,7 @@ const discord: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.get("/status", async function () {
     const status = await fastify.discord.getConnectionStatus();
     return {
-      status,
+      status: status ? CONNECTION_STATUS_MAP[status] : ConnectionStatusDto.Disconnected,
     };
   });
 };
