@@ -23,7 +23,7 @@ declare module "fastify" {
       stop: () => boolean;
       pause: () => boolean;
       unpause: () => boolean;
-      getConnectionStatus: () => Promise<VoiceConnectionStatus>;
+      getConnectionStatus: () => Promise<VoiceConnectionStatus | undefined>;
     };
   }
 }

@@ -7,6 +7,16 @@ const elevenlabsPlugin: FastifyPluginAsync = async (fastify) => {
     apiKey: fastify.config.ELEVENLABS_API_KEY,
   });
 
+  /*
+  const dictionaryPath = path.join(process.cwd(), "src/assets/dictionary.pls");
+  const dictionaryBuffer = fs.createReadStream(dictionaryPath);
+
+  elevenlabs.pronunciationDictionaries.createFromFile({
+    file: dictionaryBuffer,
+    name: "dictionary",
+  });
+*/
+
   fastify.decorate("elevenlabs", elevenlabs);
 };
 

@@ -27,7 +27,7 @@ const getTabletopChannel = async () => await discordClient.channels.fetch(TABLET
 
 const getTabletopChannelConnection = async () => {
   const channel = await getTabletopChannel();
-  if (channel.type === ChannelType.GuildVoice) {
+  if (channel?.type === ChannelType.GuildVoice) {
     return getVoiceConnection(channel.guild.id);
   }
 };
