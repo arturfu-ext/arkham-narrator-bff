@@ -106,6 +106,13 @@ const discordPlugin: FastifyPluginAsync = async (fastify) => {
   };
 
   const discord = { connect, disconnect, play, stop, pause, unpause, getConnectionStatus };
+
+  fastify.addHook("onClose", async () => {
+    const connection = await getTabletopChannelConnection();
+    connection?.destroy();
+    await discordClient.destroy();
+  });
+
   fastify.decorate("discord", discord);
 };
 
