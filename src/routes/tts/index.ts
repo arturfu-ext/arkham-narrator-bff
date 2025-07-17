@@ -26,7 +26,7 @@ const VOICE_LOOKUP: Record<string, { modelId: string; settings: VoiceSettings }>
 
 const elevenlabs: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.post(
-    "/",
+    "/play",
     {
       schema: {
         body: {
