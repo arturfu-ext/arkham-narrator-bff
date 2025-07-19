@@ -12,6 +12,7 @@ const SUPPORTED_VOICES: VoiceDefinition[] = [
   { name: "Alex - Narrator", id: "H5xTcsAIeS5RAykjz57a" },
   { name: "Adumundo PRO", id: "XoHJ8hwSLOtb2sXYdAzv" },
   { name: "Bruno Siak", id: "JxVKcxm9wtnCYEs8V00p" },
+  { name: "Bezimienny", id: "LM9e32SqA93KlqPJNiAp" },
 ];
 
 const DEFAULT_VOICE = SUPPORTED_VOICES[0];
